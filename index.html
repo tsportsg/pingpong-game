@@ -162,6 +162,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
 .sim-p{flex:1}.sim-p .name{font-size:13px;font-weight:700}.sim-p .detail-score{font-size:10px;color:var(--text-muted);margin-top:2px}
 .sim-p-vs{font-size:10px;color:var(--text-muted);font-weight:900;margin:0 8px}
 
+/* Match highlights (花絮) */
+.sim-highlights{padding:6px 0 2px;display:flex;flex-direction:column;gap:4px}
+.highlight-item{font-size:11px;line-height:1.5;color:var(--text-dim);padding:3px 8px;background:rgba(255,255,255,0.03);border-radius:6px;border-left:2px solid var(--accent);opacity:0;transform:translateX(-8px);transition:all .4s ease}
+.highlight-item.show{opacity:1;transform:translateX(0)}
+.highlight-item .hl-emoji{margin-right:4px}
+
 /* Prophecy card (result screen) */
 .prophecy-card{margin:0 16px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#0D1B3E,#142850);border:1.5px solid rgba(27,156,252,0.2)}
 .prophecy-card-header{background:var(--rainbow);padding:3px 0}
@@ -975,6 +981,215 @@ function submitProphecy() {
   setTimeout(revealNext,600);
 }
 
+// ===== HIGHLIGHTS (花絮) SYSTEM =====
+// 球员个性化花絮库：{球员名: {win:[], lose:[], clutch:[], momentum:[]}}
+const PLAYER_HIGHLIGHTS = {
+  '王楚钦': {
+    win: ['🔥 王楚钦正手爆冲直线，球速快得对手根本来不及反应！','💪 大头反手拧拉得分，这板质量太高了','⚡ 王楚钦发球直接ace！对手愣在原地','🎯 王楚钦侧身暴冲斜线，这球没商量'],
+    lose: ['😤 王楚钦正手拉球出界，他拍了一下球台','💭 大头这板有点着急了，反手下网','🫣 王楚钦发球失误，摇了摇头'],
+    clutch: ['🔥🔥 关键球！王楚钦霸气侧身，正手一板暴力拉穿！全场沸腾','💥 10平！王楚钦反手弹击直线，教科书级别的胆量！'],
+    momentum: ['📢 王楚钦握拳怒吼！这气势压住了对面','🔄 王楚钦叫了暂停，回来后发球变化明显增多']
+  },
+  '林诗栋': {
+    win: ['⚡ 林诗栋反手拧拉质量极高，弧线又低又转','🎯 小林反手连续快撕得分，手感滚烫','💪 林诗栋中远台正手对拉不落下风，年轻就是冲'],
+    lose: ['😓 林诗栋这板正手有点犹豫，球打到网带上','💭 小林经验不足的一面显现了，关键球处理偏保守'],
+    clutch: ['🔥 林诗栋关键分反手暴力拧拉得分！初生牛犊不怕虎','💥 小林决胜局展现超强心态，反手弹击拿下赛点！'],
+    momentum: ['💫 林诗栋越打越兴奋，连续抢攻让对手疲于应对']
+  },
+  '梁靖崑': {
+    win: ['💪 梁靖崑标志性正手暴冲！球砸在球台上弹起一米多高','🔥 大胖招牌反手弹击，声音贼脆','⚡ 梁靖崑中远台正手对拉，这力量谁顶得住'],
+    lose: ['😑 梁靖崑脚步没跟上，正手拉球出台','💭 大胖这板反手有点粗糙了'],
+    clutch: ['🔥🔥 梁靖崑关键球正手暴冲得分！拍着胸口怒吼！','💥 大胖逆风翻盘！中远台连拉三板绝杀！'],
+    momentum: ['💢 梁靖崑越打越狠，正手质量一板比一板高']
+  },
+  '向鹏': {
+    win: ['⚡ 向鹏反手拧拉角度刁钻，对手鞭长莫及','🎯 小将向鹏正手快带得分，手感不错'],
+    lose: ['😓 向鹏这板接发球质量不高，给了对手机会','💭 向鹏略显紧张，发球失误'],
+    clutch: ['🔥 向鹏关键球放手一搏，正手拉穿！','💥 小将爆发！向鹏连得3分翻盘！'],
+    momentum: ['📢 向鹏打出了自信，场上跑动越来越积极']
+  },
+  '周启豪': {
+    win: ['💪 周启豪正手弧圈旋转极强，对手顶不住了','⚡ 周启豪接发球反手直接挑打得分'],
+    lose: ['😤 周启豪这板正手拉球下网，有点可惜','💭 周启豪被对手调动得有点狼狈'],
+    clutch: ['🔥 周启豪关键分正手冲出了一板高质量弧圈！'],
+    momentum: ['🔄 周启豪喊了一声，给自己提气']
+  },
+  '孙颖莎': {
+    win: ['🔥 孙颖莎反手拧拉质量极高！对手完全跟不上节奏','💪 莎莎正手冲了一板，球擦网而过！运气也站在她这边','⚡ 孙颖莎发球抢攻一气呵成，太流畅了','🎯 莎莎反手快撕斜线得分，笑着握了握拳'],
+    lose: ['😣 孙颖莎正手拉球出界，她皱了皱眉','💭 莎莎这板反手下网了，摇了摇头','🫣 孙颖莎接发球挂网，深呼吸调整'],
+    clutch: ['🔥🔥 关键球！孙颖莎反手暴力弹击直线！裁判都愣了一下！','💥 莎莎决胜分正手勾手发球直接ace！全场尖叫！'],
+    momentum: ['📢 孙颖莎握拳大喊"cho"！眼神杀气十足','💫 莎莎进入了状态，每板球都打得很坚决']
+  },
+  '王曼昱': {
+    win: ['💪 王曼昱正手大力弧圈得分，这板力量太足了','⚡ 鳗鱼反手连续快撕把对手压在台内','🎯 王曼昱中远台正手对拉，身高臂长优势尽显'],
+    lose: ['😤 王曼昱这板脚步有点慢了，正手够不到位','💭 鳗鱼发球失误，摇了摇头'],
+    clutch: ['🔥 王曼昱关键球正手暴冲！她大喊着庆祝！','💥 鳗鱼逆风翻盘连得4分！太冷静了！'],
+    momentum: ['💢 王曼昱调整了节奏，开始主动加力']
+  },
+  '王艺迪': {
+    win: ['💪 王艺迪正手弧圈旋转拉满，对手挡飞了','⚡ 王艺迪反手快撕得分，节奏越来越快'],
+    lose: ['😓 王艺迪这板正手下网，有点犹豫','💭 王艺迪被对手节奏带偏了'],
+    clutch: ['🔥 王艺迪关键分反手弹击得分！她紧紧握拳！'],
+    momentum: ['📢 王艺迪叫了暂停，回来后明显更坚定了']
+  },
+  '蒯曼': {
+    win: ['⚡ 蒯曼反手拧拉旋转极强，对手直接接飞','🎯 小蒯发球变化多端，又骗过了对手'],
+    lose: ['😓 蒯曼经验上差了一点，关键球处理偏软','💭 蒯曼被对手连续追分，有些急躁'],
+    clutch: ['🔥 蒯曼关键球反手爆拧得分！不怯场！'],
+    momentum: ['💫 蒯曼越打越放松，年轻人的冲劲上来了']
+  },
+  '陈幸同': {
+    win: ['💪 陈幸同正手弧圈又沉又转，对手顶不住','⚡ 陈幸同发球抢攻一板到位'],
+    lose: ['😤 陈幸同这板反手失误，时机掌握不好','💭 陈幸同被对手搏杀得手'],
+    clutch: ['🔥 陈幸同关键球正手冲直线得分！老将经验！'],
+    momentum: ['🔄 陈幸同调整了发球策略，效果立竿见影']
+  },
+  '张本智和': {
+    win: ['🔥 张本智和反手弹击得分后怒吼庆祝！"Cho——！"','💪 张本正手暴冲直线，嘴里喊着给自己打气','⚡ 张本智和台内反手拧拉角度极刁'],
+    lose: ['😤 张本智和反手出界，他懊恼地跺了一下脚','💭 张本这板正手有点犹豫，球打出了台面'],
+    clutch: ['🔥🔥 张本智和绝境爆发！反手连续弹击拿下关键分，全场"Cho"声震天！','💥 张本大心脏！决胜球正手暴冲直接穿越！'],
+    momentum: ['📢 张本智和朝着教练席怒吼！这气场拉满了','💢 张本越打越凶，每得一分都要喊一声']
+  },
+  '松岛辉空': {
+    win: ['⚡ 松岛辉空反手快撕得分，手感滚烫','🎯 松岛正手弧圈旋转很足，对手挡飞了'],
+    lose: ['😓 松岛辉空中远台对拉落了下风','💭 松岛这球有点保守了，被对手抓住机会'],
+    clutch: ['🔥 松岛辉空关键球反手拧拉得分！日本年轻一代的实力！'],
+    momentum: ['💫 松岛辉空逐渐适应了节奏，开始主动变线']
+  },
+  '户上隼辅': {
+    win: ['💪 户上隼辅正手冲了一板质量很高的弧圈','⚡ 户上反手搏杀得分，很大胆'],
+    lose: ['😤 户上隼辅正手拉球下网，力量控制不够','💭 户上被对手发球晃住了'],
+    clutch: ['🔥 户上隼辅放手一搏，正手暴冲拿下关键分！'],
+    momentum: ['📢 户上隼辅喊了一声，重新调整心态']
+  },
+  'F.勒布伦': {
+    win: ['🔥 菲利克斯·勒布伦反手弹击速度快得离谱！','⚡ 小勒布伦正手暴冲直线，对手完全没反应过来','💪 勒布伦台内反手拧拉旋转极强'],
+    lose: ['😤 勒布伦正手失误了，他摊了摊手','💭 小勒布伦这板接发球质量不够，被抢攻'],
+    clutch: ['🔥🔥 勒布伦关键球反手高质量弹击！法国天才！','💥 小勒布伦极限救球后反拉得分！观众全站起来了！'],
+    momentum: ['📢 勒布伦朝观众挥了挥拳，全场掌声雷动']
+  },
+  'A.勒布伦': {
+    win: ['⚡ 阿列克西斯·勒布伦反手拧拉角度很刁','💪 A.勒布伦正手连续进攻得手'],
+    lose: ['😓 A.勒布伦这板接发球有些被动','💭 勒布伦弟弟正手失误了'],
+    clutch: ['🔥 A.勒布伦关键球正手冲了一板高质量弧圈！'],
+    momentum: ['💫 A.勒布伦开始加强发球变化，效果不错']
+  },
+  '莫雷加德': {
+    win: ['🔥 莫雷加德标志性六边形球拍正手冲了一板！质量极高','⚡ 瑞典天才反手弹击得分，打法太华丽了','💪 莫雷加德中远台对拉毫不吃亏，身体素质真好'],
+    lose: ['😤 莫雷加德正手出界，他无奈地摇了摇头','💭 莫雷加德被对手接发球反拧得手'],
+    clutch: ['🔥🔥 莫雷加德绝境翻盘！正手连拉三板暴冲拿下赛点！','💥 六边形战士发威！莫雷加德反手极限弹击得分！'],
+    momentum: ['📢 莫雷加德冷静地擦了擦汗，眼神越来越专注']
+  },
+  '邱党': {
+    win: ['💪 邱党正手弧圈旋转拉满，对手挡飞了','⚡ 邱党反手快撕得分，中国式打法熟悉吧'],
+    lose: ['😤 邱党这板正手下网了，有些可惜','💭 邱党被对手发球骗到了'],
+    clutch: ['🔥 邱党关键球正手暴冲得分！不愧是德国一哥！'],
+    momentum: ['🔄 邱党找到了比赛节奏，正手开始发力']
+  },
+  '杜达': {
+    win: ['💪 杜达正手大力弧圈得分，德国力量','⚡ 杜达反手挡了一板质量很高的防守回球'],
+    lose: ['😓 杜达脚步有点跟不上节奏','💭 杜达这球判断失误了'],
+    clutch: ['🔥 杜达关键球放手冲了一板！'],
+    momentum: ['📢 杜达和教练交流后节奏明显加快']
+  },
+  '张禹珍': {
+    win: ['⚡ 张禹珍反手拧拉旋转极强，对手接飞了','💪 张禹珍正手连续进攻得手'],
+    lose: ['😤 张禹珍这板正手出台了','💭 张禹珍被对手节奏带偏了'],
+    clutch: ['🔥 张禹珍关键球反手弹击得分！韩国一哥的实力！'],
+    momentum: ['📢 张禹珍朝教练席点了点头，状态回来了']
+  },
+  '张本美和': {
+    win: ['🔥 张本美和反手弹击得分！和哥哥一样霸气','⚡ 张本妹妹正手冲了一板，速度好快','💪 张本美和台内反手拧拉质量极高'],
+    lose: ['😓 张本美和这板正手有些犹豫，球出界了','💭 张本妹妹被对手连续施压，有点被动'],
+    clutch: ['🔥🔥 张本美和关键球反手暴力弹击！基因太强了！','💥 张本妹妹冷静拿下赛点，比她哥还稳！'],
+    momentum: ['📢 张本美和深吸一口气，重新调整了站位']
+  },
+  '早田希娜': {
+    win: ['💪 早田希娜正手弧圈质量极高，力量很足','⚡ 早田正手侧身暴冲得分，气势很足'],
+    lose: ['😤 早田希娜反手失误了，她低头看了看球拍','💭 早田这板接发球不太好，被对手抢攻'],
+    clutch: ['🔥 早田希娜决胜球正手暴冲！日本女队的定海神针！'],
+    momentum: ['💫 早田希娜进入了状态，正手开始频繁发力']
+  },
+  '申裕斌': {
+    win: ['⚡ 申裕斌反手拧拉角度极刁，对手够不着','🎯 申裕斌正手弧圈旋转拉满'],
+    lose: ['😓 申裕斌被对手连续调动，脚步有些乱','💭 申裕斌这球处理得有些仓促'],
+    clutch: ['🔥 申裕斌关键球放手一搏，反手暴力拧拉得分！'],
+    momentum: ['📢 申裕斌朝教练做了个手势，要变战术了']
+  },
+  '温特': {
+    win: ['💪 温特正手弧圈力量很大，对手挡不住','⚡ 温特反手连续快撕得分'],
+    lose: ['😤 温特正手下网了，摇了摇头','💭 温特被对手发球变化搞得有些被动'],
+    clutch: ['🔥 温特关键球正手冲了一板！德国铁娘子！'],
+    momentum: ['🔄 温特调整了接发球站位，效果明显好了']
+  },
+};
+
+// 通用花絮（不依赖具体球员）
+const GENERIC_HIGHLIGHTS = {
+  win_dominant: ['📺 解说：这板球没有任何悬念！','👏 观众席爆发出热烈的掌声','📊 技术统计：这局主动得分率超过60%'],
+  win_close: ['😅 好险！最后关头顶住了压力','💓 这一局打得心脏都要跳出来了','📺 解说：太刺激了！双方你来我往谁也不让谁'],
+  lose_fight: ['💪 虽然输了，但这局拼得很凶','📺 解说：虽败犹荣，这个局分差距并不大'],
+  turnaround: ['🔄 局间教练部署了新战术','💧 擦汗、深呼吸，稳住节奏','📋 教练叫了暂停，在白板上画了几笔'],
+  atmosphere: ['🏟️ 现场球迷的加油声此起彼伏','📱 弹幕刷屏：加油！！！','🔊 现场DJ播放了节奏感十足的音乐','🇨🇳 中国球迷整齐地喊起了加油口号','🎵 间歇时间，现场气氛组把气氛搞得火热']
+};
+
+// 为每盘比赛生成2-3条花絮
+function generateHighlights(result) {
+  const {myPlayer, oppPlayer, won, myGames, oppGames, gameScores} = result;
+  const highlights = [];
+  
+  const myHL = PLAYER_HIGHLIGHTS[myPlayer.name] || null;
+  const oppHL = PLAYER_HIGHLIGHTS[oppPlayer.name] || null;
+  
+  // 分析比赛态势
+  const isClose = Math.abs(myGames - oppGames) <= 1 && gameScores.length >= 4;
+  const isDominant = won && oppGames <= 1;
+  const hasDeuce = gameScores.some(g => g.my >= 10 && g.opp >= 10);
+  
+  // 第一条：开局/关键得分花絮
+  if(myHL) {
+    if(won) {
+      highlights.push(pick(myHL.win));
+    } else {
+      highlights.push(pick(myHL.lose));
+    }
+  }
+  
+  // 第二条：对手的反应/花絮
+  if(oppHL) {
+    if(!won) {
+      highlights.push(pick(oppHL.win));
+    } else {
+      highlights.push(pick(oppHL.lose));
+    }
+  }
+  
+  // 第三条：比赛氛围/关键球/转折
+  if(hasDeuce && myHL && myHL.clutch) {
+    highlights.push(pick(myHL.clutch));
+  } else if(isClose) {
+    highlights.push(pick(GENERIC_HIGHLIGHTS.win_close));
+  } else if(isDominant) {
+    highlights.push(pick(GENERIC_HIGHLIGHTS.win_dominant));
+  } else if(!won && myHL && myHL.momentum) {
+    highlights.push(pick(myHL.momentum));
+  } else {
+    highlights.push(pick(GENERIC_HIGHLIGHTS.atmosphere));
+  }
+  
+  // 偶尔加第四条（30%概率）
+  if(Math.random() < 0.3) {
+    highlights.push(pick(GENERIC_HIGHLIGHTS.atmosphere));
+  }
+  
+  return highlights.filter(Boolean); // 过滤掉null
+}
+
+function pick(arr) {
+  if(!arr || arr.length === 0) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 // ===== SIMULATION =====
 // 生成单盘比赛的"剧情"（局分细节），胜负由外部指定
 function simulateMatchDetail(myP, oppP, mustWin) {
@@ -1056,13 +1271,15 @@ function simulateMatchDetail(myP, oppP, mustWin) {
     }
   }
   
-  return {
+  const retval = {
     myPlayer:myP, oppPlayer:oppP,
     won: mustWin,
     myGames:myG, oppGames:oppG,
     gameScores:scores,
     winProb: Math.round(winProb*100)
   };
+  retval.highlights = generateHighlights(retval);
+  return retval;
 }
 
 function startMatchSim() {
@@ -1132,6 +1349,9 @@ function startMatchSim() {
         <div class="sim-p-vs">VS</div>
         <div class="sim-p"><div class="name">${r.oppPlayer.name}</div></div>
       </div>
+      <div class="sim-highlights" id="sh-${i}">
+        ${r.highlights.map((h,j)=>`<div class="highlight-item" id="hl-${i}-${j}">${h}</div>`).join('')}
+      </div>
     </div>`).join('');
   
   let homeS=0,awayS=0,mi=0;
@@ -1148,8 +1368,19 @@ function startMatchSim() {
     if(r.won)homeS++;else awayS++;
     document.getElementById('score-home').textContent=homeS;
     document.getElementById('score-away').textContent=awayS;
+    
+    // 逐条弹出花絮
+    const curMi = mi;
+    r.highlights.forEach((h,j)=>{
+      setTimeout(()=>{
+        const el = document.getElementById('hl-'+curMi+'-'+j);
+        if(el) { el.classList.add('show'); }
+      }, 400 + j*500);
+    });
+    
+    const nextDelay = 1200 + r.highlights.length * 500;
     mi++;
-    setTimeout(reveal,1200);
+    setTimeout(reveal, nextDelay);
   }
   setTimeout(reveal,400);
 }
