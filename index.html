@@ -668,11 +668,17 @@ function startRevealAndSim() {
   setTimeout(revealNext,600);
 }
 
-function simulateMatch(myP,oppP) {
+function simulateMatch(myP,oppP,forceWin) {
+  // 加权逻辑：王楚钦、孙颖莎必赢
+  const mustWinPlayers=['王楚钦','孙颖莎'];
+  const mustWin=forceWin||mustWinPlayers.includes(myP.name);
+  
   const diff=myP.rating-oppP.rating;
   const h2h=getH2H(myP.name,oppP.name);
   const total=diff+h2h;
-  const winProb=1/(1+Math.exp(-total*0.12));
+  let winProb=1/(1+Math.exp(-total*0.12));
+  if(mustWin) winProb=Math.max(winProb,0.92); // 保底92%胜率，几乎必赢
+  
   let myG=0,oppG=0;const scores=[];
   while(myG<3&&oppG<3){
     const gp=winProb+(Math.random()-0.5)*0.15;
@@ -684,6 +690,15 @@ function simulateMatch(myP,oppP) {
     else ls=Math.floor(Math.random()*5);
     if(won){scores.push({my:ws,opp:ls});myG++;}
     else{scores.push({my:ls,opp:ws});oppG++;}
+  }
+  // 必赢选手如果意外输了，强制翻盘
+  if(mustWin&&myG<oppG){
+    myG=3;oppG=Math.floor(Math.random()*2); // 3:0 或 3:1
+    scores.length=0;
+    for(let i=0;i<myG+oppG;i++){
+      if(i<oppG) scores.push({my:Math.floor(Math.random()*5)+5,opp:11});
+      else scores.push({my:11,opp:Math.floor(Math.random()*7)});
+    }
   }
   return{myPlayer:myP,oppPlayer:oppP,won:myG>oppG,myGames:myG,oppGames:oppG,gameScores:scores,winProb:Math.round(winProb*100)};
 }
@@ -697,7 +712,33 @@ function startMatchSim() {
     {my:mySlots.A,opp:oppSlots.Y,round:'第4盘'},
     {my:mySlots.B,opp:oppSlots.X,round:'第5盘'}
   ];
-  simResults=matches.map(m=>({...simulateMatch(m.my,m.opp),round:m.round}));
+  
+  // 中国 vs 日本：中国必赢
+  const isChinaVsJapan=(myTeam.name==='中国'&&oppTeam.name==='日本');
+  
+  simResults=matches.map(m=>({...simulateMatch(m.my,m.opp,false),round:m.round}));
+  
+  // 计算总比分
+  let hWins=simResults.filter(r=>r.won).length;
+  let aWins=simResults.filter(r=>!r.won).length;
+  
+  // 中国 vs 日本必赢保护
+  if(isChinaVsJapan&&hWins<3){
+    // 找到输掉的盘，从后往前翻盘
+    for(let i=simResults.length-1;i>=0&&hWins<3;i--){
+      if(!simResults[i].won){
+        simResults[i]=({...simulateMatch(matches[i].my,matches[i].opp,true),round:simResults[i].round});
+        if(simResults[i].won){hWins++;aWins--;}
+      }
+    }
+  }
+  
+  // 中国队不能0:3输（任何对手）
+  if(myTeam.name==='中国'&&hWins===0){
+    // 随机翻一盘
+    const idx=Math.floor(Math.random()*3);
+    simResults[idx]=({...simulateMatch(matches[idx].my,matches[idx].opp,true),round:simResults[idx].round});
+  }
   
   const list=document.getElementById('sim-match-list');
   list.innerHTML=simResults.map((r,i)=>`
@@ -790,7 +831,7 @@ function shareResult() {
   txt+=`我的阵容：A.${mySlots.A.name} B.${mySlots.B.name} C.${mySlots.C.name}\n`;
   txt+=`对手阵容：X.${oppSlots.X.name} Y.${oppSlots.Y.name} Z.${oppSlots.Z.name}\n`;
   txt+=won?`🏆 成功击败${oppTeam.name}队！`:`😤 不敌${oppTeam.name}队，不服再来！`;
-  txt+=`\n你也来排一局 👉 https://tsportsg.github.io/pingpong-game/`;
+  txt+=`\n你也来排一局 👉 https://m.sports.qq.com/tsportsg/pingpong-game.html`;
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>alert('已复制到剪贴板！'));}
   else{prompt('复制分享：',txt);}
 }
