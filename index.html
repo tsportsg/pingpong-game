@@ -217,6 +217,52 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
 .pred-item .pred-time{font-size:10px;color:var(--text-muted);margin-top:4px}
 
 /* Confetti */
+/* Verify button in prediction list */
+.pred-verify-btn{display:inline-block;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.pred-verify-btn.enter{background:rgba(247,183,49,0.15);color:var(--accent);border:1px solid rgba(247,183,49,0.3)}
+.pred-verify-btn.enter:active{transform:scale(0.95)}
+.pred-verify-btn.done{background:rgba(34,197,94,0.12);color:var(--win);border:1px solid rgba(34,197,94,0.2);cursor:default}
+.pred-verify-btn.miss{background:rgba(239,68,68,0.12);color:var(--lose);border:1px solid rgba(239,68,68,0.2);cursor:default}
+
+/* Verify modal */
+.verify-modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:110;align-items:center;justify-content:center}
+.verify-modal-overlay.show{display:flex}
+.verify-modal{background:var(--bg2);border-radius:16px;width:calc(100% - 32px);max-width:400px;max-height:85vh;overflow-y:auto;padding:20px;border:1px solid var(--card-border)}
+.verify-modal-title{font-size:16px;font-weight:800;text-align:center;margin-bottom:4px}
+.verify-modal-sub{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:16px}
+.verify-section{margin-bottom:14px}
+.verify-section-label{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.verify-score-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
+.verify-score-num{width:48px;height:48px;border-radius:10px;background:var(--card);border:2px solid var(--card-border);color:var(--text);font-size:22px;font-weight:900;text-align:center;line-height:48px;cursor:pointer;transition:all .2s;user-select:none}
+.verify-score-num:active{transform:scale(0.93)}
+.verify-score-num.active{border-color:var(--primary);background:rgba(27,156,252,0.12)}
+.verify-score-sep{font-size:20px;color:var(--text-muted);font-weight:900}
+.verify-score-picker{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.verify-score-opt{padding:8px 14px;border-radius:8px;border:1.5px solid var(--card-border);background:var(--card);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;min-width:58px;text-align:center}
+.verify-score-opt:active{transform:scale(0.95)}
+.verify-score-opt.selected{border-color:var(--primary);background:rgba(27,156,252,0.12);box-shadow:0 2px 10px var(--primary-glow)}
+.verify-btn-row{display:flex;gap:8px;margin-top:16px}
+.verify-btn-row .btn-primary,.verify-btn-row .btn-secondary{flex:1}
+
+/* Verify result card */
+.verify-card{margin:8px 0;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--card-border)}
+.verify-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.verify-badge{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.verify-badge.perfect{background:linear-gradient(135deg,rgba(247,183,49,0.2),rgba(34,197,94,0.2));color:var(--accent);border:1px solid rgba(247,183,49,0.3)}
+.verify-badge.partial{background:rgba(27,156,252,0.12);color:var(--primary);border:1px solid rgba(27,156,252,0.2)}
+.verify-badge.wrong{background:rgba(239,68,68,0.1);color:var(--lose);border:1px solid rgba(239,68,68,0.15)}
+.verify-compare{display:flex;gap:8px;align-items:stretch}
+.verify-col{flex:1;padding:8px;border-radius:8px;text-align:center}
+.verify-col.pred-col{background:rgba(27,156,252,0.06);border:1px solid rgba(27,156,252,0.1)}
+.verify-col.real-col{background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.1)}
+.verify-col-label{font-size:10px;color:var(--text-muted);margin-bottom:4px;font-weight:600}
+.verify-col-score{font-size:20px;font-weight:900}
+.verify-col-score.match{color:var(--win)}
+.verify-col-score.mismatch{color:var(--lose)}
+.verify-col-lineup{font-size:10px;color:var(--text-dim);margin-top:4px}
+.verify-hit-summary{font-size:12px;color:var(--text-dim);text-align:center;margin-top:8px;line-height:1.6}
+.verify-hit-summary strong{color:var(--text)}
+
 @keyframes confetti{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(-100px) rotate(360deg)}}
 .confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;animation:confetti 1.5s ease forwards;z-index:200}
 
@@ -312,6 +358,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
   <div class="modal-content">
     <div class="modal-title" id="modal-title">选择出战选手</div>
     <div id="player-options"></div>
+  </div>
+</div>
+
+<!-- ===== Verify modal (赛后验证录入) ===== -->
+<div class="verify-modal-overlay" id="verify-modal">
+  <div class="verify-modal">
+    <div class="verify-modal-title">📋 录入真实赛果</div>
+    <div class="verify-modal-sub" id="verify-match-info"></div>
+    <div class="verify-section">
+      <div class="verify-section-label">总比分（主队 : 客队）</div>
+      <div class="verify-score-picker" id="verify-score-picker"></div>
+    </div>
+    <div class="verify-btn-row">
+      <button class="btn-secondary" onclick="closeVerifyModal()">取消</button>
+      <button class="btn-primary" id="btn-verify-submit" disabled onclick="submitVerify()">✅ 确认录入</button>
+    </div>
   </div>
 </div>
 
@@ -638,15 +700,15 @@ function renderSchedule() {
     const home = teams.find(t=>t.id===m.homeId);
     const away = teams.find(t=>t.id===m.awayId);
     const pred = predictions.find(p=>p.matchId===m.id);
-    groups[dateStr].push({...m, home, away, predicted:!!pred});
+    groups[dateStr].push({...m, home, away, predicted:!!pred, verified:!!(pred&&pred.realScore), verifyResult: pred&&pred.realScore ? getVerifyResult(pred) : null});
   });
   
   let html = '';
   for(const date in groups) {
     html += `<div class="schedule-date">📅 ${date}</div>`;
     groups[date].forEach(m=>{
-      const statusClass = m.predicted ? 'predicted' : 'open';
-      const statusText = m.predicted ? '✅ 已预言' : '🔮 待预言';
+      const statusClass = m.verified ? (m.verifyResult.level==='perfect'?'predicted':'open') : m.predicted ? 'predicted' : 'open';
+      const statusText = m.verified ? `${m.verifyResult.emoji} ${m.verifyResult.label}` : m.predicted ? '✅ 已预言' : '🔮 待预言';
       html += `
       <div class="match-card" onclick="enterPrediction('${m.id}')">
         <div class="match-info">
@@ -1389,8 +1451,56 @@ function renderPredictions() {
     list.innerHTML = '<div class="pred-empty">还没有预言记录，去赛程页面开始你的第一次预言吧！</div>';
     return;
   }
-  list.innerHTML = predictions.map(p=>{
+  
+  // 统计验证情况
+  const verified = predictions.filter(p=>p.realScore);
+  const perfect = verified.filter(p=>p.realScore===p.predictedScore);
+  const scoreHit = verified.filter(p=>{
+    if(!p.realScore) return false;
+    const [pH,pA]=p.predictedScore.split(':').map(Number);
+    const [rH,rA]=p.realScore.split(':').map(Number);
+    return (pH>pA)===(rH>rA); // 胜负方向对了
+  });
+  
+  let statsHtml = '';
+  if(verified.length>0) {
+    statsHtml = `<div style="padding:8px 0 12px;text-align:center;font-size:12px;color:var(--text-dim);line-height:1.8">
+      📊 已验证 <strong style="color:var(--primary)">${verified.length}</strong> 场 · 
+      比分全中 <strong style="color:var(--accent)">${perfect.length}</strong> · 
+      胜负命中 <strong style="color:var(--win)">${scoreHit.length}</strong> · 
+      命中率 <strong style="color:${scoreHit.length/verified.length>=0.5?'var(--win)':'var(--lose)'}">${Math.round(scoreHit.length/verified.length*100)}%</strong>
+    </div>`;
+  }
+  
+  list.innerHTML = statsHtml + predictions.map(p=>{
     const match = [...SCHEDULE.men,...SCHEDULE.women].find(m=>m.id===p.matchId);
+    
+    // 验证按钮/状态
+    let verifyHtml = '';
+    if(p.realScore) {
+      const result = getVerifyResult(p);
+      verifyHtml = `<div class="verify-card">
+        <div class="verify-card-header">
+          <span style="font-size:12px;font-weight:700">赛后验证</span>
+          <span class="verify-badge ${result.level}">${result.emoji} ${result.label}</span>
+        </div>
+        <div class="verify-compare">
+          <div class="verify-col pred-col">
+            <div class="verify-col-label">🔮 我的预言</div>
+            <div class="verify-col-score ${result.scoreMatch?'match':'mismatch'}">${p.predictedScore}</div>
+            <div class="verify-col-lineup">${p.lineup.A}/${p.lineup.B}/${p.lineup.C}</div>
+          </div>
+          <div class="verify-col real-col">
+            <div class="verify-col-label">📋 真实赛果</div>
+            <div class="verify-col-score match">${p.realScore}</div>
+          </div>
+        </div>
+        <div class="verify-hit-summary">${result.summary}</div>
+      </div>`;
+    } else {
+      verifyHtml = `<div style="margin-top:6px"><button class="pred-verify-btn enter" onclick="openVerifyModal('${p.matchId}')">📋 录入赛果</button></div>`;
+    }
+    
     return `
     <div class="pred-item">
       <div class="pred-match">
@@ -1405,8 +1515,96 @@ function renderPredictions() {
         </div>
       </div>
       <div class="pred-time">${match?match.round+' · ':''}${p.time}</div>
+      ${verifyHtml}
     </div>`;
   }).join('');
+}
+
+// ===== VERIFY LOGIC =====
+let verifyMatchId = null;
+let verifyScore = null;
+
+function openVerifyModal(matchId) {
+  verifyMatchId = matchId;
+  verifyScore = null;
+  
+  const pred = predictions.find(p=>p.matchId===matchId);
+  if(!pred) return;
+  
+  document.getElementById('verify-match-info').textContent = 
+    `${pred.myTeam.flag} ${pred.myTeam.name} vs ${pred.oppTeam.flag} ${pred.oppTeam.name}`;
+  
+  // 生成比分选项（从主队视角）
+  const scores = ['3:0','3:1','3:2','2:3','1:3','0:3'];
+  document.getElementById('verify-score-picker').innerHTML = scores.map(s=>{
+    const [a,b] = s.split(':');
+    const isWin = parseInt(a)>parseInt(b);
+    return `<div class="verify-score-opt" data-vscore="${s}" onclick="pickVerifyScore('${s}')">${pred.myTeam.flag} ${s} ${pred.oppTeam.flag}</div>`;
+  }).join('');
+  
+  document.getElementById('btn-verify-submit').disabled = true;
+  document.getElementById('verify-modal').classList.add('show');
+}
+
+function pickVerifyScore(score) {
+  verifyScore = score;
+  document.querySelectorAll('.verify-score-opt').forEach(o=>o.classList.remove('selected'));
+  document.querySelector(`.verify-score-opt[data-vscore="${score}"]`).classList.add('selected');
+  document.getElementById('btn-verify-submit').disabled = false;
+}
+
+function closeVerifyModal() {
+  document.getElementById('verify-modal').classList.remove('show');
+  verifyMatchId = null;
+  verifyScore = null;
+}
+
+document.getElementById('verify-modal').addEventListener('click',function(e){if(e.target===this)closeVerifyModal()});
+
+function submitVerify() {
+  if(!verifyMatchId || !verifyScore) return;
+  
+  const idx = predictions.findIndex(p=>p.matchId===verifyMatchId);
+  if(idx<0) return;
+  
+  predictions[idx].realScore = verifyScore;
+  predictions[idx].verifyTime = new Date().toLocaleString('zh-CN');
+  localStorage.setItem('pp_predictions', JSON.stringify(predictions));
+  
+  closeVerifyModal();
+  renderPredictions();
+}
+
+function getVerifyResult(pred) {
+  const [pH,pA] = pred.predictedScore.split(':').map(Number);
+  const [rH,rA] = pred.realScore.split(':').map(Number);
+  
+  const scoreMatch = pred.predictedScore === pred.realScore;
+  const dirMatch = (pH>pA) === (rH>rA); // 胜负方向
+  const closeMatch = dirMatch && Math.abs(pH-rH)<=1; // 比分接近
+  
+  let level, emoji, label, summary;
+  
+  if(scoreMatch) {
+    level = 'perfect';
+    emoji = '🎯';
+    label = '比分全中！';
+    summary = `<strong>完美预言！</strong> 你的预测 ${pred.predictedScore} 与真实赛果完全一致！神预言家就是你 🏆`;
+  } else if(dirMatch) {
+    level = 'partial';
+    emoji = '✅';
+    label = '胜负命中';
+    const predWinner = pH>pA ? pred.myTeam.name : pred.oppTeam.name;
+    summary = `胜负方向判断正确！<strong>${predWinner}</strong>确实赢了，只是比分从 ${pred.predictedScore} 变成了 ${pred.realScore}`;
+  } else {
+    level = 'wrong';
+    emoji = '😅';
+    label = '翻车了';
+    const realWinner = rH>rA ? pred.myTeam.name : pred.oppTeam.name;
+    summary = `大意了！你预测 ${pred.predictedScore}，实际赛果 ${pred.realScore}，<strong>${realWinner}</strong>赢了。下次一定 💪`;
+  }
+  
+  return { level, emoji, label, summary, scoreMatch, dirMatch };
 }
 
 // ===== NAVIGATION =====
@@ -1428,6 +1626,19 @@ function shareResult() {
   txt += `我的阵容：A.${mySlots.A.name} B.${mySlots.B.name} C.${mySlots.C.name}\n`;
   const [ph,pa] = sc.split(':').map(Number);
   txt += ph>pa ? `🏆 我预测${myTeam.name}队获胜！` : `💪 我预测${oppTeam.name}队获胜！`;
+  
+  // 如果有验证记录，追加命中率
+  const verified = predictions.filter(p=>p.realScore);
+  if(verified.length>0) {
+    const hit = verified.filter(p=>{
+      const [a,b]=p.predictedScore.split(':').map(Number);
+      const [c,d]=p.realScore.split(':').map(Number);
+      return (a>b)===(c>d);
+    });
+    const perfect = verified.filter(p=>p.realScore===p.predictedScore);
+    txt += `\n📊 我的战绩：${verified.length}场验证，胜负命中${hit.length}场${perfect.length>0?'，比分全中'+perfect.length+'场':''}`;
+  }
+  
   txt += `\n你也来预言 👉 https://m.sports.qq.com/tsportsg/pingpong-game.html`;
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>alert('已复制到剪贴板！'));}
   else{prompt('复制分享：',txt);}
