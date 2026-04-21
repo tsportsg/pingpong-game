@@ -1318,16 +1318,32 @@ function startMatchSim() {
 }
 
 // ===== RESULT =====
+function getResultFlavor(won, scoreH, scoreA) {
+  if (won) {
+    if (scoreH === 3 && scoreA === 0) return { emoji: '🏆', title: '轻松横扫，Easy！', sub: '三局不失，统治级表现' };
+    if (scoreH === 3 && scoreA === 1) return { emoji: '🏆', title: '稳健取胜，大局在握', sub: '虽丢一局但全程掌控节奏' };
+    if (scoreH === 3 && scoreA === 2) return { emoji: '🔥', title: '鏖战五局，险胜！', sub: '太刺激了！绝境逆转拿下胜利' };
+    return { emoji: '🏆', title: '赢了！', sub: '' };
+  } else {
+    if (scoreA === 3 && scoreH === 0) return { emoji: '😵', title: '被横扫了...', sub: '对手太强，下次换个排阵试试' };
+    if (scoreA === 3 && scoreH === 1) return { emoji: '😤', title: '惜败，差一口气', sub: '有机会但没把握住，不甘心' };
+    if (scoreA === 3 && scoreH === 2) return { emoji: '💔', title: '五局惜败，功亏一篑', sub: '都打到决胜局了啊！太可惜了' };
+    return { emoji: '😤', title: '输了...', sub: '' };
+  }
+}
+
 function showResult(h,a) {
   const won=h>a;
   const finalScore = predictedScore || (h+':'+a);
+  const [psH, psA] = (predictedScore || h+':'+a).split(':').map(Number);
+  const flavor = getResultFlavor(won, psH, psA);
   
-  document.getElementById('result-emoji').textContent = won ? '🏆' : '😤';
+  document.getElementById('result-emoji').textContent = flavor.emoji;
   const t=document.getElementById('result-title');
-  t.textContent = won ? `预言：${myTeam.name}队 ${finalScore} 获胜！` : `预言：${oppTeam.name}队获胜 ${finalScore}`;
+  t.textContent = `${myTeam.name}队 ${finalScore} ${won?'获胜':'落败'}`;
   t.className = 'result-title '+(won?'win':'lose');
   
-  const subText = `你的预言阵容已生成，快分享给好友吧 👀`;
+  const subText = flavor.title + (flavor.sub ? '　' + flavor.sub : '');
   document.getElementById('result-sub').textContent = subText;
   
   // Fill prophecy card
@@ -1426,12 +1442,15 @@ function resetAll() {
 function shareResult() {
   const sc = predictedScore || (document.getElementById('pc-score-home').textContent+':'+document.getElementById('pc-score-away').textContent);
   const match = currentMatchId ? [...SCHEDULE.men,...SCHEDULE.women].find(m=>m.id===currentMatchId) : null;
-  let txt = `🔮 乒乒乓乓大预言家 · 我的预言\n`;
-  if(match) txt += `📅 ${match.round} · ${match.date}\n`;
+  const [ph,pa] = sc.split(':').map(Number);
+  const won = ph > pa;
+  const flavor = getResultFlavor(won, ph, pa);
+  let txt = `乒乒乓乓大预言家 · 我的预言\n`;
+  if(match) txt += `${match.round} · ${match.date}\n`;
   txt += `${myTeam.flag} ${myTeam.name} ${sc} ${oppTeam.flag} ${oppTeam.name}\n`;
   txt += `我的阵容：A.${mySlots.A.name} B.${mySlots.B.name} C.${mySlots.C.name}\n`;
-  const [ph,pa] = sc.split(':').map(Number);
-  txt += ph>pa ? `🏆 我预测${myTeam.name}队获胜！` : `💪 我预测${oppTeam.name}队获胜！`;
+  txt += `${flavor.emoji} ${flavor.title}`;
+  if(flavor.sub) txt += ` ${flavor.sub}`;
   txt += `\n你也来预言 👉 https://m.sports.qq.com/tsportsg/pingpong-game.html`;
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>alert('已复制到剪贴板！'));}
   else{prompt('复制分享：',txt);}
