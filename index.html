@@ -401,7 +401,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
     </div>
   </div>
 
-  <div style="font-size:10px;color:var(--text-muted);text-align:center;margin:10px 16px;opacity:0.6">* 比赛结果为模拟生成，仅供娱乐。赛后以实际赛果为准</div>
+  <div style="font-size:10px;color:var(--text-muted);text-align:center;margin:10px 16px;opacity:0.6">* 比赛过程按你的预言比分演绎，赛后以实际赛果验证预言</div>
 
   <div class="btn-group">
     <button class="btn-primary" onclick="shareResult()">📸 复制分享文案</button>
@@ -976,37 +976,93 @@ function submitProphecy() {
 }
 
 // ===== SIMULATION =====
-function simulateMatch(myP,oppP,forceWin) {
-  const mustWinPlayers=['王楚钦','孙颖莎'];
-  const mustWin=forceWin||mustWinPlayers.includes(myP.name);
+// 生成单盘比赛的"剧情"（局分细节），胜负由外部指定
+function simulateMatchDetail(myP, oppP, mustWin) {
+  const diff = myP.rating - oppP.rating;
+  const h2h = getH2H(myP.name, oppP.name);
+  const total = diff + h2h;
+  let winProb = 1/(1+Math.exp(-total*0.12));
   
-  const diff=myP.rating-oppP.rating;
-  const h2h=getH2H(myP.name,oppP.name);
-  const total=diff+h2h;
-  let winProb=1/(1+Math.exp(-total*0.12));
-  if(mustWin) winProb=Math.max(winProb,0.92);
+  // 根据实力差距决定赢/输得多"合理"
+  // mustWin=true → 这盘必须我方赢, mustWin=false → 这盘必须对方赢
+  let myG=0, oppG=0;
+  const scores=[];
   
-  let myG=0,oppG=0;const scores=[];
-  while(myG<3&&oppG<3){
-    const gp=winProb+(Math.random()-0.5)*0.15;
-    const won=Math.random()<gp;
-    let ws=11,ls;
-    const c=Math.random();
-    if(c<0.3){ls=Math.floor(Math.random()*5)+7;if(ls>=10)ws=ls+2;}
-    else if(c<0.6)ls=Math.floor(Math.random()*3)+5;
-    else ls=Math.floor(Math.random()*5);
-    if(won){scores.push({my:ws,opp:ls});myG++;}
-    else{scores.push({my:ls,opp:ws});oppG++;}
-  }
-  if(mustWin&&myG<oppG){
-    myG=3;oppG=Math.floor(Math.random()*2);
-    scores.length=0;
-    for(let i=0;i<myG+oppG;i++){
-      if(i<oppG) scores.push({my:Math.floor(Math.random()*5)+5,opp:11});
-      else scores.push({my:11,opp:Math.floor(Math.random()*7)});
+  if(mustWin) {
+    // 我方赢这盘：3:0 / 3:1 / 3:2 取决于实力差
+    const dominance = Math.min(1, Math.max(0, (winProb-0.3)/0.5)); // 0~1
+    const r = Math.random();
+    let targetMyG, targetOppG;
+    if(r < 0.15 + dominance*0.35) { targetMyG=3; targetOppG=0; }      // 强势横扫
+    else if(r < 0.55 + dominance*0.2) { targetMyG=3; targetOppG=1; }   // 正常赢
+    else { targetMyG=3; targetOppG=2; }                                 // 苦战
+    
+    // 生成局分序列（先随机排胜负局的位置）
+    const totalGames = targetMyG + targetOppG;
+    const winSlots = new Set();
+    // 最后一局必须是赢
+    winSlots.add(totalGames-1);
+    while(winSlots.size < targetMyG) {
+      winSlots.add(Math.floor(Math.random()*(totalGames-1)));
+    }
+    for(let i=0; i<totalGames; i++) {
+      if(winSlots.has(i)) {
+        let ws=11, ls;
+        const c=Math.random();
+        if(c<0.3){ls=Math.floor(Math.random()*5)+7;if(ls>=10)ws=ls+2;}
+        else if(c<0.6)ls=Math.floor(Math.random()*3)+5;
+        else ls=Math.floor(Math.random()*5);
+        scores.push({my:ws, opp:ls}); myG++;
+      } else {
+        let ws=11, ls;
+        const c=Math.random();
+        if(c<0.3){ls=Math.floor(Math.random()*5)+7;if(ls>=10)ws=ls+2;}
+        else if(c<0.6)ls=Math.floor(Math.random()*3)+5;
+        else ls=Math.floor(Math.random()*5);
+        scores.push({my:ls, opp:ws}); oppG++;
+      }
+    }
+  } else {
+    // 对方赢这盘
+    const dominance = Math.min(1, Math.max(0, ((1-winProb)-0.3)/0.5));
+    const r = Math.random();
+    let targetMyG, targetOppG;
+    if(r < 0.15 + dominance*0.35) { targetMyG=0; targetOppG=3; }
+    else if(r < 0.55 + dominance*0.2) { targetMyG=1; targetOppG=3; }
+    else { targetMyG=2; targetOppG=3; }
+    
+    const totalGames = targetMyG + targetOppG;
+    const loseSlots = new Set();
+    loseSlots.add(totalGames-1); // 最后一局必须是输
+    while(loseSlots.size < targetOppG) {
+      loseSlots.add(Math.floor(Math.random()*(totalGames-1)));
+    }
+    for(let i=0; i<totalGames; i++) {
+      if(loseSlots.has(i)) {
+        let ws=11, ls;
+        const c=Math.random();
+        if(c<0.3){ls=Math.floor(Math.random()*5)+7;if(ls>=10)ws=ls+2;}
+        else if(c<0.6)ls=Math.floor(Math.random()*3)+5;
+        else ls=Math.floor(Math.random()*5);
+        scores.push({my:ls, opp:ws}); oppG++;
+      } else {
+        let ws=11, ls;
+        const c=Math.random();
+        if(c<0.3){ls=Math.floor(Math.random()*5)+7;if(ls>=10)ws=ls+2;}
+        else if(c<0.6)ls=Math.floor(Math.random()*3)+5;
+        else ls=Math.floor(Math.random()*5);
+        scores.push({my:ws, opp:ls}); myG++;
+      }
     }
   }
-  return{myPlayer:myP,oppPlayer:oppP,won:myG>oppG,myGames:myG,oppGames:oppG,gameScores:scores,winProb:Math.round(winProb*100)};
+  
+  return {
+    myPlayer:myP, oppPlayer:oppP,
+    won: mustWin,
+    myGames:myG, oppGames:oppG,
+    gameScores:scores,
+    winProb: Math.round(winProb*100)
+  };
 }
 
 function startMatchSim() {
@@ -1019,31 +1075,49 @@ function startMatchSim() {
     {my:mySlots.B,opp:oppSlots.X,round:'第5盘'}
   ];
   
-  const isChinaVsJapan=(myTeam.name==='中国'&&oppTeam.name==='日本');
+  // 核心改动：模拟结果严格按照用户的预测比分来编排
+  const [predH, predA] = predictedScore.split(':').map(Number);
+  const totalMatches = predH + predA; // 实际需要打的盘数
   
-  // 如果用户预测了比分，尝试让模拟结果贴近预测
-  const [predH,predA] = predictedScore ? predictedScore.split(':').map(Number) : [0,0];
-  const userPredictWin = predH > predA;
+  // 决定每盘的胜负分配：predH盘赢、predA盘输
+  // 约束：最后一盘的结果决定胜负方向
+  const winIndices = new Set();
+  const loseIndices = new Set();
   
-  simResults=matches.map(m=>({...simulateMatch(m.my,m.opp,false),round:m.round}));
-  
-  let hWins=simResults.filter(r=>r.won).length;
-  let aWins=simResults.filter(r=>!r.won).length;
-  
-  // 中国 vs 日本必赢保护
-  if(isChinaVsJapan&&hWins<3){
-    for(let i=simResults.length-1;i>=0&&hWins<3;i--){
-      if(!simResults[i].won){
-        simResults[i]=({...simulateMatch(matches[i].my,matches[i].opp,true),round:simResults[i].round});
-        if(simResults[i].won){hWins++;aWins--;}
-      }
-    }
+  // 最后一盘（决定性一盘）
+  if(predH > predA) {
+    // 我方赢，最后一盘必须赢
+    winIndices.add(totalMatches - 1);
+  } else {
+    // 我方输，最后一盘必须输
+    loseIndices.add(totalMatches - 1);
   }
   
-  // 中国队不能0:3输
-  if(myTeam.name==='中国'&&hWins===0){
-    const idx=Math.floor(Math.random()*3);
-    simResults[idx]=({...simulateMatch(matches[idx].my,matches[idx].opp,true),round:simResults[idx].round});
+  // 随机分配剩余的胜负
+  const remainingSlots = [];
+  for(let i=0; i<totalMatches-1; i++) remainingSlots.push(i);
+  // 洗牌
+  for(let i=remainingSlots.length-1; i>0; i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [remainingSlots[i],remainingSlots[j]]=[remainingSlots[j],remainingSlots[i]];
+  }
+  
+  let needWins = predH - winIndices.size;
+  let needLoses = predA - loseIndices.size;
+  
+  for(const idx of remainingSlots) {
+    if(needWins > 0) { winIndices.add(idx); needWins--; }
+    else { loseIndices.add(idx); needLoses--; }
+  }
+  
+  // 只模拟实际要打的盘数（5盘3胜，打到一方先到3就停）
+  simResults = [];
+  for(let i=0; i<totalMatches && i<matches.length; i++) {
+    const m = matches[i];
+    const mustWin = winIndices.has(i);
+    const result = simulateMatchDetail(m.my, m.opp, mustWin);
+    result.round = m.round;
+    simResults.push(result);
   }
   
   const list=document.getElementById('sim-match-list');
@@ -1062,7 +1136,7 @@ function startMatchSim() {
   
   let homeS=0,awayS=0,mi=0;
   function reveal() {
-    if(mi>=simResults.length||homeS>=3||awayS>=3){setTimeout(()=>showResult(homeS,awayS),600);return;}
+    if(mi>=simResults.length){setTimeout(()=>showResult(homeS,awayS),600);return;}
     const r=simResults[mi];
     const item=document.getElementById('si-'+mi);
     const res=document.getElementById('sr-'+mi);
@@ -1083,22 +1157,14 @@ function startMatchSim() {
 // ===== RESULT =====
 function showResult(h,a) {
   const won=h>a;
-  const finalScore = h+':'+a;
-  const matchedPrediction = predictedScore === finalScore;
+  const finalScore = predictedScore || (h+':'+a);
   
-  document.getElementById('result-emoji').textContent = matchedPrediction ? '🎯' : (won ? '🏆' : '😤');
+  document.getElementById('result-emoji').textContent = won ? '🏆' : '😤';
   const t=document.getElementById('result-title');
-  if(matchedPrediction) {
-    t.textContent = '神预言！比分完全命中！';
-    t.className = 'result-title win';
-  } else {
-    t.textContent = won ? myTeam.name+'队获胜！' : '遗憾落败...';
-    t.className = 'result-title '+(won?'win':'lose');
-  }
+  t.textContent = won ? `预言：${myTeam.name}队 ${finalScore} 获胜！` : `预言：${oppTeam.name}队获胜 ${finalScore}`;
+  t.className = 'result-title '+(won?'win':'lose');
   
-  const subText = predictedScore 
-    ? `你的预测：${predictedScore} | 模拟结果：${finalScore}`
-    : (won ? `以 ${h}:${a} 击败${oppTeam.name}队！` : `${h}:${a} 不敌${oppTeam.name}队`);
+  const subText = `你的预言阵容已生成，赛后验证你的眼光 👀`;
   document.getElementById('result-sub').textContent = subText;
   
   // Fill prophecy card
@@ -1108,8 +1174,9 @@ function showResult(h,a) {
   document.getElementById('pc-my-name').textContent = myTeam.name;
   document.getElementById('pc-opp-flag').textContent = oppTeam.flag;
   document.getElementById('pc-opp-name').textContent = oppTeam.name;
-  document.getElementById('pc-score-home').textContent = predictedScore ? predictedScore.split(':')[0] : h;
-  document.getElementById('pc-score-away').textContent = predictedScore ? predictedScore.split(':')[1] : a;
+  const [pcH, pcA] = (predictedScore || h+':'+a).split(':');
+  document.getElementById('pc-score-home').textContent = pcH;
+  document.getElementById('pc-score-away').textContent = pcA;
   
   // Lineup detail
   let ch=0,ca=0;
@@ -1132,7 +1199,6 @@ function showResult(h,a) {
       myTeam: {name:myTeam.name,flag:myTeam.flag},
       oppTeam: {name:oppTeam.name,flag:oppTeam.flag},
       predictedScore: predictedScore,
-      simScore: finalScore,
       lineup: {A:mySlots.A.name,B:mySlots.B.name,C:mySlots.C.name},
       time: new Date().toLocaleString('zh-CN')
     };
@@ -1142,7 +1208,7 @@ function showResult(h,a) {
   }
   
   showScreen('screen-result');
-  if(matchedPrediction || won) spawnConfetti();
+  if(won) spawnConfetti();
 }
 
 function spawnConfetti() {
@@ -1175,7 +1241,7 @@ function renderPredictions() {
       </div>
       <div class="pred-detail">
         <div>
-          <div class="pred-score">预测 ${p.predictedScore} | 模拟 ${p.simScore}</div>
+          <div class="pred-score">🔮 预测 ${p.predictedScore}</div>
           <div class="pred-lineup">阵容：${p.lineup.A} / ${p.lineup.B} / ${p.lineup.C}</div>
         </div>
       </div>
