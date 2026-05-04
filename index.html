@@ -605,43 +605,25 @@ const DATA = {
 };
 
 // ===== 2026伦敦世乒赛团体赛 真实淘汰赛赛程 =====
+// confirmed: true=对阵已确定（显示）, false=对阵未确定（不显示）
 const SCHEDULE = {
   men: [
-    // 1/16决赛 - 5月5日
-    {id:'m_r32_1',round:'1/16决赛',homeId:'australia',awayId:'china',date:'5月5日 17:00',status:'open'},
-    {id:'m_r32_2',round:'1/16决赛',homeId:'romania',awayId:'poland_m',date:'5月5日 17:00',status:'open'},
-    {id:'m_r32_3',round:'1/16决赛',homeId:'korea',awayId:'germany',date:'5月5日 19:30',status:'open'},
-    {id:'m_r32_4',round:'1/16决赛',homeId:'japan',awayId:'france',date:'5月5日 19:30',status:'open'},
-    {id:'m_r32_5',round:'1/16决赛',homeId:'sweden',awayId:'japan',date:'5月5日 02:30',status:'open'},
-    // 1/8决赛 - 5月7日
-    {id:'m_r16_1',round:'1/8决赛',homeId:'china',awayId:'romania',date:'5月7日 待定',status:'open'},
-    {id:'m_r16_2',round:'1/8决赛',homeId:'korea',awayId:'france',date:'5月7日 待定',status:'open'},
-    // 1/4决赛 - 5月8日
-    {id:'m_qf1',round:'1/4决赛',homeId:'china',awayId:'korea',date:'5月8日 待定',status:'open'},
-    {id:'m_qf2',round:'1/4决赛',homeId:'sweden',awayId:'japan',date:'5月8日 待定',status:'open'},
-    // 半决赛 - 5月9日
-    {id:'m_sf1',round:'半决赛',homeId:'china',awayId:'france',date:'5月9日 待定',status:'open'},
-    {id:'m_sf2',round:'半决赛',homeId:'japan',awayId:'sweden',date:'5月9日 待定',status:'open'},
-    // 决赛 - 5月10日
-    {id:'m_f',round:'决赛 🏆',homeId:'china',awayId:'japan',date:'5月10日 23:00',status:'open'},
+    // 1/16决赛 - 5月5日（已确定）
+    {id:'m_r32_1',round:'1/16决赛',homeId:'australia',awayId:'china',date:'5月5日 17:00',confirmed:true},
+    {id:'m_r32_2',round:'1/16决赛',homeId:'romania',awayId:'poland_m',date:'5月5日 17:00',confirmed:true},
+    {id:'m_r32_3',round:'1/16决赛',homeId:'korea',awayId:'germany',date:'5月5日 19:30',confirmed:true},
+    {id:'m_r32_4',round:'1/16决赛',homeId:'japan',awayId:'france',date:'5月5日 19:30',confirmed:true},
+    {id:'m_r32_5',round:'1/16决赛',homeId:'sweden',awayId:'japan',date:'5月5日 02:30',confirmed:true},
   ],
   women: [
-    // 1/16决赛 - 5月4日(已赛完)
-    {id:'w_r32_1',round:'1/16决赛',homeId:'china_w',awayId:'poland_w',date:'5月4日 19:30',status:'open'},
-    {id:'w_r32_2',round:'1/16决赛',homeId:'korea_w',awayId:'france_w',date:'5月4日 02:30',status:'open'},
-    {id:'w_r32_3',round:'1/16决赛',homeId:'japan_w',awayId:'germany_w',date:'5月4日 02:30',status:'open'},
-    {id:'w_r32_4',round:'1/16决赛',homeId:'sweden_w',awayId:'dprk_w',date:'5月4日 17:00',status:'open'},
-    // 1/8决赛 - 5月6日
-    {id:'w_r16_1',round:'1/8决赛',homeId:'china_w',awayId:'sweden_w',date:'5月6日 待定',status:'open'},
-    {id:'w_r16_2',round:'1/8决赛',homeId:'korea_w',awayId:'japan_w',date:'5月6日 待定',status:'open'},
-    // 1/4决赛 - 5月8日
-    {id:'w_qf1',round:'1/4决赛',homeId:'china_w',awayId:'korea_w',date:'5月8日 待定',status:'open'},
-    {id:'w_qf2',round:'1/4决赛',homeId:'japan_w',awayId:'germany_w',date:'5月8日 待定',status:'open'},
-    // 半决赛 - 5月9日
-    {id:'w_sf1',round:'半决赛',homeId:'china_w',awayId:'japan_w',date:'5月9日 待定',status:'open'},
-    {id:'w_sf2',round:'半决赛',homeId:'germany_w',awayId:'korea_w',date:'5月9日 待定',status:'open'},
-    // 决赛 - 5月10日
-    {id:'w_f',round:'决赛 🏆',homeId:'china_w',awayId:'japan_w',date:'5月10日 18:00',status:'open'},
+    // 1/16决赛 - 5月4日(已结束)
+    {id:'w_r32_1',round:'1/16决赛',homeId:'china_w',awayId:'poland_w',date:'5月4日 19:30',confirmed:true},
+    {id:'w_r32_2',round:'1/16决赛',homeId:'korea_w',awayId:'france_w',date:'5月4日 02:30',confirmed:true},
+    {id:'w_r32_3',round:'1/16决赛',homeId:'japan_w',awayId:'germany_w',date:'5月4日 02:30',confirmed:true},
+    {id:'w_r32_4',round:'1/16决赛',homeId:'sweden_w',awayId:'dprk_w',date:'5月4日 17:00',confirmed:true},
+    // 1/8决赛 - 5月6日（已确定对阵）
+    {id:'w_r16_1',round:'1/8决赛',homeId:'china_w',awayId:'sweden_w',date:'5月6日 待定',confirmed:true},
+    {id:'w_r16_2',round:'1/8决赛',homeId:'korea_w',awayId:'japan_w',date:'5月6日 待定',confirmed:true},
   ]
 };
 
@@ -734,9 +716,9 @@ function renderSchedule() {
   const matches = SCHEDULE[gender];
   const teams = DATA[gender].teams;
   
-  // Group by date
+  // Group by date (only show confirmed matches)
   const groups = {};
-  matches.forEach(m=>{
+  matches.filter(m=>m.confirmed).forEach(m=>{
     const dateStr = m.date.split(' ')[0];
     if(!groups[dateStr]) groups[dateStr] = [];
     const home = teams.find(t=>t.id===m.homeId);
