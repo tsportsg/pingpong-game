@@ -229,16 +229,6 @@ body>*{position:relative;z-index:1}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* Bottom search bar */
-.app-search-bar{position:sticky;bottom:0;padding:10px 16px;background:rgba(17,19,24,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:50;border-top:1px solid var(--card-border)}
-.app-search-wrapper{width:100%;max-width:380px;padding:4px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:24px;background:rgba(255,255,255,0.04);margin:0 auto}
-.app-capsule{display:flex;align-items:stretch;width:100%;border-radius:20px;overflow:hidden;cursor:pointer;box-shadow:none;border:none}
-.app-capsule:active{transform:scale(0.98);opacity:0.9}
-.app-capsule-left{display:flex;align-items:center;gap:6px;padding:6px 10px;background:transparent;flex-shrink:0}
-.app-capsule-left img{height:36px;width:36px;object-fit:contain;border-radius:6px;vertical-align:middle;display:block}
-.app-capsule-right{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 16px;background:transparent}
-.app-capsule-right .kw{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;letter-spacing:6px}
-.search-icon-svg{width:16px;height:16px;opacity:0.5}
 </style>
 </head>
 <body>
@@ -403,21 +393,6 @@ body>*{position:relative;z-index:1}
     <button class="btn-primary" onclick="shareResult()">复制分享文案</button>
     <button class="btn-secondary" onclick="resetAndBack()">继续预言其他场次</button>
     <button class="btn-secondary" onclick="resetAll()">返回首页</button>
-  </div>
-</div>
-
-<!-- ===== Bottom Search Bar ===== -->
-<div class="app-search-bar">
-  <div class="app-search-wrapper">
-    <div class="app-capsule" onclick="openApp()">
-      <div class="app-capsule-left">
-        <img src="logo.png" alt="腾讯体育">
-      </div>
-      <div class="app-capsule-right">
-        <span class="kw">世乒赛</span>
-        <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1555,11 +1530,6 @@ function shareResult() {
   txt += `\n你也来预言 👉 https://m.sports.qq.com/tsportsg/pingpong-game.html`;
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>alert('已复制到剪贴板！'));}
   else{prompt('复制分享：',txt);}
-}
-
-// ===== Open App =====
-function openApp() {
-  window.location.href = 'https://sports.qq.com/kbs/m.htm?biz_ref=txtiyugzhcaidan';
 }
 
 // ===== INIT =====
